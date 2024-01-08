@@ -38,6 +38,8 @@ PAUSE_TIME = 3
 
 tistory_blog_name = 'https://pemtinfo1.tistory.com'
 
+tistory_category_name = '분양정보'
+
 def init_driver():
     if osName not in "Windows":
         try:
@@ -116,7 +118,8 @@ def tistory_write(_driver, keyword):
     # 카테고리 선택
     _driver.find_element(By.ID, 'category-btn').click()
     sleep(PAUSE_TIME)
-    _driver.find_element(By.ID, 'category-item-1089536').click()
+    # _driver.find_element(By.ID, 'category-item-1089536').click()
+    _driver.find_element(By.XPATH, f"//span[normalize-space()='{tistory_category_name}']").click()
     sleep(PAUSE_TIME)
     
     # 제목 입력
