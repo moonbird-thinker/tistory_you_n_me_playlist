@@ -64,7 +64,7 @@ GEMINI_REQUEST_DELAY_TIME = 300
 selected_AI_model = 2
 
 # gemini 토큰 정보 입력
-GOOGLE_GEMINI_API_KEY = "AIzaSyDn_V-wzJpNSNZ7A2GkhbGAmiIxzM2E8g4"
+GOOGLE_GEMINI_API_KEY = "" # 여러분들의 토큰 정보를 넣어주세요!!!
 
 keyword = '김범수+꿈일까'
 
