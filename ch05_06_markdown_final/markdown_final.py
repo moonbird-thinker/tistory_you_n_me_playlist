@@ -292,15 +292,17 @@ Share Url : {vibe_album_reverse_df['shareUrl'][item_index]}
 
 ---
 """
-
-    for item_index in range(len(google_search_info_df[:ITEMS_PER_SUBJECT])):
-        google_search_body = google_search_body + f"""
+    if google_search_info_df != 0:
+        for item_index in range(len(google_search_info_df[:ITEMS_PER_SUBJECT])):
+            google_search_body = google_search_body + f"""
 제목 : {google_search_info_df['title'][item_index]}
 설명 : {google_search_info_df['description'][item_index]}
 링크 : {google_search_info_df['url'][item_index]}
 
 ---
 """
+    else:
+        google_search_body = ''
 
     post_content = post_head + ai_body + album_body + track_body + preview_body + youtube_body + google_search_body
     # post_content = markdown.markdown(post_content)   # markdown > html 로 변환
@@ -335,7 +337,7 @@ Share Url : {vibe_album_reverse_df['shareUrl'][item_index]}
         #     df.to_csv(csv_path, mode='w', sep=',', na_rep='NaN', encoding='utf-8-sig', index=False)
 
     # -------------------------------------------------------------
-    # 티스토리예 셀레니움(selenium)을 사용하여 포스팅
+    # 티스토리에 셀레니움(selenium)을 사용하여 포스팅
     # -------------------------------------------------------------
     _driver.get(f'{tistory_blog_name}/manage/post')
     sleep(LOADING_WAIT_TIME)
@@ -439,11 +441,33 @@ def make_google_bard_data(driver, keyword):
 
 
 def make_google_gemini_data(keyword):
+    safety_settings = [
+        {
+            "category": "HARM_CATEGORY_DANGEROUS",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_HARASSMENT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_HATE_SPEECH",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            "threshold": "BLOCK_NONE",
+        },
+        {
+            "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+            "threshold": "BLOCK_NONE",
+        },
+    ]
     genai.configure(api_key=GOOGLE_GEMINI_API_KEY)
     model = genai.GenerativeModel('gemini-pro')
 
     print(f'\ngemini 질문 키워드는 ({keyword}) 입니다.')
-    answer = model.generate_content(f"'{keyword}' 라는 가수 및 노래에 대해 자세히 설명해줘")
+    answer = model.generate_content(f"'{keyword}' 라는 가수 및 노래에 대해 자세히 설명해줘", safety_settings=safety_settings)
 
     try:
         # result = markdown.markdown(answer.text)  # HTML 로 포스팅 할때
@@ -551,31 +575,36 @@ def get_youtube_info(keyword):
 
 
 def get_google_search_info(keyword):
-    result_lists = search(f"{keyword}+MV", num_results=10, advanced=True)  # 3개의 결과값만 가져오도록 함
 
-    # print(type(result_lists))  # generator type
+    try:
+        result_lists = search(f"{keyword}+MV", num_results=10, advanced=True)  # 3개의 결과값만 가져오도록 함
 
-    google_search_info_lists = []
-    # print('')
-    for result in result_lists:
-        temp_dic = {'title': result.title, 'description': result.description, 'url': result.url}
-        # print(f"{result.title} | {result.description} | {result.url}")
-        google_search_info_lists.append(temp_dic)
+        # print(type(result_lists))  # generator type
 
-    df = pd.DataFrame(google_search_info_lists)
-    df.drop_duplicates(subset=['title', 'description', 'url'],
-                       keep="first")  # 중복제거를할때 남길 행입니다. first면 위에서부터 첫값을 남기고 last면 행의 마지막 값을 남깁
-    df = df[:3]  # 위 search 함수에서 generator 를 통해 10개의 데이터를 뽑았지만 우리가 필요한건 3개의 데이터
+        google_search_info_lists = []
+        # print('')
+        for result in result_lists:
+            temp_dic = {'title': result.title, 'description': result.description, 'url': result.url}
+            # print(f"{result.title} | {result.description} | {result.url}")
+            google_search_info_lists.append(temp_dic)
 
-    print('')
-    for idx in df.index:
-        print(f"{idx + 1}. {df.loc[idx, 'title']} | {df.loc[idx, 'description']} | {df.loc[idx, 'url']}")
+        df = pd.DataFrame(google_search_info_lists)
+        df.drop_duplicates(subset=['title', 'description', 'url'],
+                           keep="first")  # 중복제거를할때 남길 행입니다. first면 위에서부터 첫값을 남기고 last면 행의 마지막 값을 남깁
+        df = df[:3]  # 위 search 함수에서 generator 를 통해 10개의 데이터를 뽑았지만 우리가 필요한건 3개의 데이터
 
-    # print(tabulate(df, headers='keys', tablefmt='grid'))
-    # TODO: frame 형태로 티스토리에 넣어주기
-    # <p><iframe src="https://music.bugs.co.kr/track/33037375?wl_ref=list_tr_08_chart" width="860" height="484" frameborder="0" allowfullscreen="true"></iframe></p>
+        print('')
+        for idx in df.index:
+            print(f"{idx + 1}. {df.loc[idx, 'title']} | {df.loc[idx, 'description']} | {df.loc[idx, 'url']}")
 
-    return df
+        # print(tabulate(df, headers='keys', tablefmt='grid'))
+        # TODO: frame 형태로 티스토리에 넣어주기
+        # <p><iframe src="https://music.bugs.co.kr/track/33037375?wl_ref=list_tr_08_chart" width="860" height="484" frameborder="0" allowfullscreen="true"></iframe></p>
+
+        return df
+    except:
+        print('reCAPTCHA, 이상 트래픽 감지로 인한 google info. 가져오기 실패, 추후 순수 requests 로 변경 예정(googlesearch() 사용안함)')
+        return 0
 
 
 def get_vibe_info(keyword):
@@ -608,8 +637,6 @@ def get_vibe_info(keyword):
     albumTotalCount = int(xd.parse(searchall_info_response)['response']['result']['albumResult']['albumTotalCount'])
     print('albumTotalCount ==>', albumTotalCount)
     for i in range(albumTotalCount):
-        if i == albumTotalCount - 1:
-            break
         temp_dic = {}
         if albumTotalCount == 1:
             album_id = xd.parse(searchall_info_response)['response']['result']['albumResult']['albums']['album'][
@@ -703,13 +730,15 @@ def get_vibe_info(keyword):
             f"{i + 1}. {album_id} | {albumTitle} | {agencyName} | {productionName} | {releaseDate} | {artistName} | {artist_imageUrl} | {album_imageUrl} | {sizeAndDuration} | {artistTotalCount} | {description} | {albumGenres} | {shareUrl}")
         album_info_lists.append(temp_dic)
 
+        if i == albumTotalCount - 1:
+            break
+
     # track 에 대한 정보
     track_info_lists = []
     print('')
     trackTotalCount = int(xd.parse(searchall_info_response)['response']['result']['trackResult']['trackTotalCount'])
-    for i in range(trackTotalCount):  # 0, 1
-        if i == trackTotalCount - 1:
-            break
+    print('trackTotalCount ==>', trackTotalCount)
+    for i in range(trackTotalCount):
         temp_dic = {}
         if trackTotalCount == 1:
             track_id = xd.parse(searchall_info_response)['response']['result']['trackResult']['tracks']['track'][
@@ -728,7 +757,7 @@ def get_vibe_info(keyword):
         try:
             lyrics = xd.parse(parse.unquote(response.content))['response']['result']['lyric']['normalLyric']['text']
         except:
-            lyrics = ''
+            break
         # try:
         #     lyrics_list = xd.parse(parse.unquote(response.content))['response']['result']['lyric']['syncLyric']['contents']['contents']['text']['text']
         # except:
@@ -738,6 +767,9 @@ def get_vibe_info(keyword):
         # print(f"{i + 1}. {lyrics} | {lyrics_list}")
         print(f"{i + 1}. {lyrics}")
         track_info_lists.append(temp_dic)
+
+        if i == trackTotalCount - 1:
+            break
 
     # album_df = pd.DataFrame(album_info_lists).sort_index(ascending=False) # 역순으로해야 실제 검색결과랑 동일하나 추후 확인해 봐야 함
     # track_df = pd.DataFrame(track_info_lists).sort_index(ascending=False)
@@ -765,6 +797,7 @@ def main():
         # keyword = '김범수+꿈일까'
         # keyword = '자이언티+모르는사람'
         # keyword = '비오+미처버리겠다'
+        # keyword = '뉴진스+hypeboy'
 
         print('\n' + C_BOLD + C_YELLOW + C_BGBLACK + '[크롬 드라이버 초기화 시작]', C_END)
         driver = init_driver()
