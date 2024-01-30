@@ -730,7 +730,7 @@ def get_vibe_info(keyword):
             f"{i + 1}. {album_id} | {albumTitle} | {agencyName} | {productionName} | {releaseDate} | {artistName} | {artist_imageUrl} | {album_imageUrl} | {sizeAndDuration} | {artistTotalCount} | {description} | {albumGenres} | {shareUrl}")
         album_info_lists.append(temp_dic)
 
-        if i == albumTotalCount - 1:
+        if i == albumTotalCount - 1 or i == 2:  # 매우 위험한 로직, 정보가 꼬여있거나 해서 정확한 정보 업데이트 불가 - TODO: 추후 업데이트:
             break
 
     # track 에 대한 정보
@@ -768,7 +768,7 @@ def get_vibe_info(keyword):
         print(f"{i + 1}. {lyrics}")
         track_info_lists.append(temp_dic)
 
-        if i == trackTotalCount - 1:
+        if i == trackTotalCount - 1 or i == 2:  # 매우 위험한 로직, 정보가 꼬여있거나 해서 정확한 정보 업데이트 불가 - TODO: 추후 업데이트:
             break
 
     # album_df = pd.DataFrame(album_info_lists).sort_index(ascending=False) # 역순으로해야 실제 검색결과랑 동일하나 추후 확인해 봐야 함
