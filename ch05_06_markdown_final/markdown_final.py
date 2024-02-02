@@ -92,9 +92,6 @@ BARD_REQUEST_WAIT_TIME = 300
 keyword_list_csv_path = 'keyword_lists.csv'
 
 # post md 파일이 저장될 위치
-# post_md_location = r"O:\workspace\ree31206.github.io\_posts"
-# post_md_location = r"/Users/xxx/Desktop/crawling/playlist"  # for mac
-# post_md_location = r"O:\workspace\post_baskup"
 post_md_location = r"O:\workspace"
 
 # ------------------------------------------------------------------------------------------------ END #
@@ -292,7 +289,7 @@ Share Url : {vibe_album_reverse_df['shareUrl'][item_index]}
 
 ---
 """
-    if google_search_info_df != 0:
+    if google_search_info_df is not 0:
         for item_index in range(len(google_search_info_df[:ITEMS_PER_SUBJECT])):
             google_search_body = google_search_body + f"""
 제목 : {google_search_info_df['title'][item_index]}
